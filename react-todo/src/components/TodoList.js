@@ -2,39 +2,88 @@ import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
 import ListGroup from "react-bootstrap/ListGroup";
 import TodoItem from "./TodoItem";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const TodoList = () => {
-
   let intialList = [
     { id: 1, text: "Clean Room", done: true },
     { id: 2, text: "Buy Toilet Paper", done: false },
     { id: 3, text: "Walk Dog", done: false },
-    { id: 4, text: "Call Revenue", done: false },
-    { id: 5, text: "Book Haircut", done: false },
   ];
 
+  let localList = JSON.parse(localStorage.getItem("todos"));
+
+  if (localList) {
+    intialList = localList;
+  }
+  // console.log(localList)
+
   const [list, setList] = useState(intialList);
-  const [textInput,setTextInput] = useState('')
-  const handleTextInput = (e) =>{
-    setTextInput(e.target.value)
+  const [textInput, setTextInput] = useState("");
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(list));
+  }, [list]);
+  const handleTextInput = (e) => {
+    setTextInput(e.target.value);
+  };
+  const addTodoItem = () => {
+    let lastItem = list[list.length - 1];
+    let id = 1;
+    if (lastItem) {
+      id = lastItem.id + 1;
+    }
+
+    let newTodo = {
+      id: id,
+      text: textInput,
+      done: false,
+    };
+
+    setList((prevList) => [...prevList, newTodo]);
+    setTextInput("");
+  };
+
+  const markAsDone = (id) => {
+    const newList = list.map((item) => {
+      if (item.id === id) {
+        item.done = true;
+      }
+      return item;
+    });
+    setList(newList);
+  };
+
+  const removeItem = (id) => {
+    const newList = list.filter((item) => item.id !== id);
+    setList(newList);
+  };
+
+  const handleKeyUp = (e) => {
+    if(e.key === 'Enter'){
+      addTodoItem()
+    }
   }
 
   let todoItems = list.map((item) => {
-    return <TodoItem key={item.id} todo={item} />;
+    return (
+      <TodoItem
+        key={item.id}
+        todo={item}
+        markAsDone={markAsDone}
+        removeItem={removeItem}
+      />
+    );
   });
 
   return (
     <Card>
-      <Card.Header>TodoList</Card.Header>
+      <Card.Header>To do List {localStorage.getItem("name")}</Card.Header>
       <Card.Body>
-        <ListGroup>
-         {todoItems}
-        </ListGroup>
+        <ListGroup>{todoItems}</ListGroup>
       </Card.Body>
       <Card.Footer>
-        <input type="text" onChange={handleTextInput} value={textInput}/>
-        <Button variant="primary" className="float-end">
+        <input type="text" onChange={handleTextInput} value={textInput} onKeyUp={handleKeyUp} />
+        <Button variant="primary" className="float-end" onClick={addTodoItem}>
           Add
         </Button>
       </Card.Footer>
